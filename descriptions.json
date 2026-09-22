@@ -1,0 +1,16 @@
+{
+  "_注释": "插件名的中文简介。键必须与 settings.json 里 packages 的写法完全一致（例如 \"npm:pi-subagents\"）。这里没有列出的插件会自动改用它自己 package.json 的 description，所以新装的插件不用来这里登记。",
+  "_格式": "键 = 插件来源字符串；值 = 想要显示的小括号内容。以 _ 开头的键会被忽略，可以用作注释。",
+
+  "npm:pi-web-access": "网页搜索 / 抓取 URL / 克隆 GitHub 仓库 / PDF 提取 / YouTube 与本地视频理解",
+  "npm:pi-subagents": "子代理委派与多代理编排，附带 council、并行 review 等提示模板",
+  "npm:@plannotator/pi-extension": "计划评审与代码评审，可给 agent 消息加批注",
+  "npm:pi-goal-x": "/goal 目标规划、进度持久化与独立验收",
+  "npm:@gotgenes/pi-permission-system": "权限审批：工具调用前按规则校验并请求授权",
+
+  "npm:pi-lens": "实时代码反馈：LSP、linter、formatter、类型检查、结构化分析与诊断小组件",
+  "npm:pi-simplify": "审查近期改动的代码，关注可读性、一致性与可维护性",
+  "npm:@amaster.ai/pi-memory-mem0": "Mem0 语义记忆：自动记录、语义召回，并提供可被模型调用的 memory 工具",
+  "npm:@juicesharp/rpiv-ask-user-question": "结构化问卷工具：需要你拍板时用带选项的提问代替模型自己猜",
+  "npm:@juicesharp/rpiv-todo": "模型用的 todo 清单，实时浮层显示，可跨 /reload 与上下文压缩保留"
+}

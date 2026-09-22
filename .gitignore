@@ -1,0 +1,23 @@
+# 本机运行态 / 生成物：不进仓库
+#   —— 它们是「这台机器」的状态，不是设计本身
+
+# 汉化工具的运行数据
+localize/backup/
+localize/last-report.json
+
+# 由 extract*.mjs 生成的摸底产物（随时可重新生成）
+localize/extracted.json
+localize/keybindings.json
+localize/settings-items.json
+localize/candidates.txt
+
+# 还原操作留下的备份
+*.zh.bak
+
+# 依赖与编辑器
+node_modules/
+package-lock.json
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

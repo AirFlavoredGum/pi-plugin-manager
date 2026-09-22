@@ -1,0 +1,14 @@
+# 统一换行符，避免 Windows/Linux 之间的整文件 diff
+* text=auto
+
+*.ts   text eol=lf
+*.mjs  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+
+# Windows 脚本保持 CRLF
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf

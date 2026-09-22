@@ -1,0 +1,36 @@
+{
+  "name": "pi-plugin-manager",
+  "version": "1.0.0",
+  "description": "pi 的插件开关面板：/plugin-manager 一屏启停已装插件的 extensions / skills / prompts / themes（可选附带界面汉化组件 pi-zh-localize）",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-extension",
+    "plugin-manager",
+    "resources",
+    "toggle",
+    "tui"
+  ],
+  "license": "MIT",
+  "author": "AirFlavoredGum",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AirFlavoredGum/pi-plugin-manager.git"
+  },
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "verify": "node localize/plugin/verify-all.mjs"
+  }
+}

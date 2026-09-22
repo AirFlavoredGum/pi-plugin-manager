@@ -1,0 +1,398 @@
+{
+ "version": "plugins-1",
+ "backupTag": "plugins",
+ "note": "插件/扩展的界面文案汉化词典（斜杠命令补全说明、提示词模板说明）；用法同 zh-dict.json。roots 里写相对路径时，相对于 <agent>/npm/node_modules 解析；用环境变量 PI_PLUGIN_NM_DIR 可换成别的目录（也可以直接写绝对路径）。",
+ "roots": {
+  "subagents": "pi-subagents",
+  "goal-x": "pi-goal-x",
+  "web-access": "pi-web-access",
+  "plannotator": "@plannotator/pi-extension",
+  "permission-system": "@gotgenes/pi-permission-system",
+  "pi-lens": "pi-lens",
+  "mem0": "@amaster.ai/pi-memory-mem0",
+  "pi-simplify": "pi-simplify",
+  "rpiv-todo": "@juicesharp/rpiv-todo"
+ },
+ "denyTexts": [],
+ "entries": [
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Administer subagents: inspect metadata and update models, thinking, or prompts\"",
+   "zh": "description: \"管理子代理：查看元数据，并调整模型、思考等级或提示词\"",
+   "note": "/subagents"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Run one subagent through workflowScript: /run agent[output=file] [task] [--bg] [--fork]\"",
+   "zh": "description: \"用 workflowScript 运行单个子代理：/run agent[output=file] [task] [--bg] [--fork]\"",
+   "note": "/run"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Show parent and subagent child usage cost for this session\"",
+   "zh": "description: \"显示本会话中主会话与子代理的用量成本\"",
+   "note": "/subagent-cost"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Show subagent diagnostics\"",
+   "zh": "description: \"显示子代理诊断信息\"",
+   "note": "/subagents-doctor"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Host integration bridge: answer an async child inspection request with a correlated widget payload (no model turn)\"",
+   "zh": "description: \"宿主集成桥：用一个关联的 widget 载荷应答异步子任务检查请求（不消耗模型回合）\"",
+   "note": "/subagents-inspect-rpc"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Show a packaged subagents guide topic\"",
+   "zh": "description: \"显示内置的子代理指南主题\"",
+   "note": "/subagents-guide"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Generate a bounded project-local refinement overlay for one subagent\"",
+   "zh": "description: \"为单个子代理生成项目本地、有边界的细化覆盖层\"",
+   "note": "/subagents-refine"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Open the live subagent fleet inspector\"",
+   "zh": "description: \"打开实时子代理集群查看器\"",
+   "note": "/subagents-fleet"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Detach the active foreground single-subagent run without terminating it\"",
+   "zh": "description: \"把当前前台运行的单子代理任务转为后台，但不终止它\"",
+   "note": "/subagents-detach"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Stop a current-session async subagent run, or one child of it with /subagents-stop <run-id> <child-id>\"",
+   "zh": "description: \"停止本会话中的异步子代理运行；加 <run-id> <child-id> 可只停止其中一个子任务\"",
+   "note": "/subagents-stop"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Steer a live async subagent run with a message, or one child of it with --child <child-id>\"",
+   "zh": "description: \"向运行中的异步子代理发送引导消息；用 --child <child-id> 可只作用于某个子任务\"",
+   "note": "/subagents-steer"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Show model mappings for discovered subagents\"",
+   "zh": "description: \"显示已发现子代理的模型映射\"",
+   "note": "/subagents-models"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"List saved subagent profiles\"",
+   "zh": "description: \"列出已保存的子代理配置档案\"",
+   "note": "/subagents-profiles"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Load a subagent profile into ~/.pi/agent/settings.json\"",
+   "zh": "description: \"把某个子代理配置档案载入 ~/.pi/agent/settings.json\"",
+   "note": "/subagents-load-profile"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Refresh the cached model catalog for one provider\"",
+   "zh": "description: \"刷新指定 provider 的模型目录缓存\"",
+   "note": "/subagents-refresh-provider-models"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Generate <provider>.quota and <provider>.quality subagent profiles\"",
+   "zh": "description: \"生成 <provider>.quota 与 <provider>.quality 两套子代理配置档案\"",
+   "note": "/subagents-generate-profiles"
+  },
+  {
+   "file": "subagents:src/slash/slash-commands.js",
+   "anchor": "description: \"Check whether a saved profile still points to usable models\"",
+   "zh": "description: \"检查已保存的配置档案是否仍指向可用模型\"",
+   "note": "/subagents-check-profile"
+  },
+  {
+   "file": "subagents:src/slash/prompt-workflows.js",
+   "anchor": "description: \"Run a prompt template through native pi-subagents: /prompt-workflow <name> [args]\"",
+   "zh": "description: \"用原生 pi-subagents 运行提示词模板：/prompt-workflow <name> [args]\"",
+   "note": "/prompt-workflow"
+  },
+  {
+   "file": "subagents:src/extension/herdr-pi-bridge.js",
+   "anchor": "description: \"Internal pane-native request dispatch\"",
+   "zh": "description: \"内部：pane 原生请求分发\"",
+   "note": "/pi-subagents-bridge"
+  },
+  {
+   "file": "subagents:src/watchdog/register-main.js",
+   "anchor": "description: \"Show or toggle the default-off subagent watchdog\"",
+   "zh": "description: \"查看或切换默认关闭的子代理看门狗\"",
+   "note": "/subagents-watchdog"
+  },
+  {
+   "file": "subagents:prompts/council.md",
+   "anchor": "description: Run a bounded supervisor-mediated council of advisors and write a decision memo",
+   "zh": "description: 运行一个有边界的、由主管主持的顾问团，并输出决策备忘",
+   "note": "提示词模板 council"
+  },
+  {
+   "file": "subagents:prompts/gather-context-and-clarify.md",
+   "anchor": "description: Use subagents to gather context, then ask clarifying questions",
+   "zh": "description: 先用子代理收集上下文，再提出澄清问题",
+   "note": "提示词模板 gather-context-and-clarify"
+  },
+  {
+   "file": "subagents:prompts/parallel-cleanup.md",
+   "anchor": "description: Parallel cleanup review",
+   "zh": "description: 并行清理评审",
+   "note": "提示词模板 parallel-cleanup"
+  },
+  {
+   "file": "subagents:prompts/parallel-research.md",
+   "anchor": "description: Parallel subagents research",
+   "zh": "description: 并行子代理调研",
+   "note": "提示词模板 parallel-research"
+  },
+  {
+   "file": "subagents:prompts/parallel-review.md",
+   "anchor": "description: Parallel subagents review",
+   "zh": "description: 并行子代理评审",
+   "note": "提示词模板 parallel-review"
+  },
+  {
+   "file": "subagents:prompts/review-loop.md",
+   "anchor": "description: Review/fix loop until clean",
+   "zh": "description: 评审/修复循环，直到干净",
+   "note": "提示词模板 review-loop"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Draft a regular goal with clarification, task planning, and confirmation.\"",
+   "zh": "description: \"起草普通 goal：先澄清需求，再规划任务并确认。\"",
+   "note": "/goal"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Draft a Sisyphus goal with clarification, task planning, and confirmation.\"",
+   "zh": "description: \"起草 Sisyphus goal：先澄清需求，再规划任务并确认。\"",
+   "note": "/sisyphus"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Cancel the in-progress guided draft without creating or modifying a goal.\"",
+   "zh": "description: \"取消进行中的引导式起草，不创建也不修改 goal。\"",
+   "note": "/goal-cancel"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Create and start a regular goal immediately, without drafting.\"",
+   "zh": "description: \"跳过起草，立即创建并启动普通 goal。\"",
+   "note": "/goal-direct"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Create and start a Sisyphus goal immediately, without drafting.\"",
+   "zh": "description: \"跳过起草，立即创建并启动 Sisyphus goal。\"",
+   "note": "/sisyphus-direct"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"List all open goals and the current focus.\"",
+   "zh": "description: \"列出所有未完成的 goal 以及当前焦点。\"",
+   "note": "/goal-list"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Show the unified goal dashboard (read-only). Append \\\"verbose\\\" for full detail or \\\"health\\\" for storage/runtime checks.\"",
+   "zh": "description: \"显示统一的 goal 仪表盘（只读）。附加 \\\"verbose\\\" 看完整细节，附加 \\\"health\\\" 做存储/运行时检查。\"",
+   "note": "/goal-status"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Re-read goal storage caches (pool, ledger, settings) from disk and report what changed. Picks up external edits to .pi files — no file watchers needed.\"",
+   "zh": "description: \"从磁盘重新读取 goal 存储缓存（池、账本、设置）并报告变化。可感知对 .pi 文件的外部修改 —— 无需文件监视器。\"",
+   "note": "/goal-refresh"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Read-only storage/recovery report (malformed goal files, malformed ledger lines, stale locks, orphaned snapshot data). Append \\\"repair\\\" to remove stale locks and refresh the pool snapshot after confirmation (with backup).\"",
+   "zh": "description: \"只读的存储/恢复报告（损坏的 goal 文件、损坏的账本行、过期锁、孤立快照数据）。附加 \\\"repair\\\" 可在确认后清除过期锁并刷新池快照（会先备份）。\"",
+   "note": "/goal-recovery"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Choose which open goal this session focuses on.\"",
+   "zh": "description: \"选择本会话聚焦哪个未完成的 goal。\"",
+   "note": "/goal-focus"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Stop focusing the current goal (session only; goal stays open).\"",
+   "zh": "description: \"取消聚焦当前 goal（仅本会话；goal 仍保持打开）。\"",
+   "note": "/goal-unfocus"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Open pi-goal settings (auditor provider/model/thinking level).\"",
+   "zh": "description: \"打开 pi-goal 设置（审计用 provider/模型/思考等级）。\"",
+   "note": "/goal-settings"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Refine the current goal's objective with the user.\"",
+   "zh": "description: \"与用户一起细化当前 goal 的目标。\"",
+   "note": "/goal-tweak"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Archive the current goal after confirmation (user-owned abandonment).\"",
+   "zh": "description: \"确认后归档当前 goal（由用户主动放弃）。\"",
+   "note": "/goal-clear"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Pause the currently running goal. Esc also pauses while running.\"",
+   "zh": "description: \"暂停正在运行的 goal。运行中按 Esc 也会暂停。\"",
+   "note": "/goal-pause"
+  },
+  {
+   "file": "goal-x:extensions/goal-commands.ts",
+   "anchor": "description: \"Continue now and renew the configured autonomous-run allowance.\"",
+   "zh": "description: \"立即继续，并重置已配置的自主运行额度。\"",
+   "note": "/goal-resume"
+  },
+  {
+   "file": "web-access:dist/index.js",
+   "anchor": "description: \"Open web search curator\"",
+   "zh": "description: \"打开联网搜索管理器\"",
+   "note": "/websearch"
+  },
+  {
+   "file": "web-access:dist/index.js",
+   "anchor": "description: \"Toggle or configure the search curator workflow\"",
+   "zh": "description: \"切换或配置搜索管理器工作流\"",
+   "note": "/curator"
+  },
+  {
+   "file": "web-access:dist/index.js",
+   "anchor": "description: \"Show the active Google account for Gemini Web\"",
+   "zh": "description: \"显示 Gemini Web 当前使用的 Google 账号\"",
+   "note": "/google-account"
+  },
+  {
+   "file": "web-access:dist/index.js",
+   "anchor": "description: \"Browse stored web search results\"",
+   "zh": "description: \"浏览已保存的联网搜索结果\"",
+   "note": "/search"
+  },
+  {
+   "file": "plannotator:index.ts",
+   "anchor": "description: \"Toggle plannotator planning mode\"",
+   "zh": "description: \"切换 plannotator 规划模式\"",
+   "note": "/plannotator-plan-mode"
+  },
+  {
+   "file": "plannotator:index.ts",
+   "anchor": "description: \"Open interactive code review for current changes or a PR URL; pass --git or --gitbutler to force that provider, --base <ref> / --diff-type <type> to pin the session's opening diff\"",
+   "zh": "description: \"对当前改动或 PR URL 打开交互式代码评审；用 --git 或 --gitbutler 指定 provider，用 --base <ref> / --diff-type <type> 固定本次会话打开的 diff\"",
+   "note": "/plannotator-review"
+  },
+  {
+   "file": "plannotator:index.ts",
+   "anchor": "description: \"Open markdown file or folder in annotation UI\"",
+   "zh": "description: \"在标注界面中打开 markdown 文件或文件夹\"",
+   "note": "/plannotator-annotate"
+  },
+  {
+   "file": "plannotator:index.ts",
+   "anchor": "description: \"Annotate the last assistant message\"",
+   "zh": "description: \"标注最后一条助手消息\"",
+   "note": "/plannotator-last"
+  },
+  {
+   "file": "permission-system:src/config/config-modal.ts",
+   "anchor": "\"Configure pi-permission-system logging and yolo-mode behavior\"",
+   "zh": "\"配置 pi-permission-system 的日志与 yolo 模式行为\"",
+   "note": "/permission-system（跨行 description）",
+   "allowAnyKey": true
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Toggle pi-lens on/off for the current session. Usage: /lens-toggle\"",
+   "zh": "description: \"切换本会话的 pi-lens 开关。用法：/lens-toggle\"",
+   "note": "/lens-toggle"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Toggle automatic context injection on/off for the current session (tools/LSP/read-guard/formatting stay active). Usage: /lens-context-toggle\"",
+   "zh": "description: \"切换本会话的自动上下文注入（工具/LSP/读取守卫/格式化保持启用）。用法：/lens-context-toggle\"",
+   "note": "/lens-context-toggle"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Show or hide the pi-lens diagnostics widget below the editor. Usage: /lens-widget-toggle\"",
+   "zh": "description: \"显示或隐藏编辑器下方的 pi-lens 诊断小组件。用法：/lens-widget-toggle\"",
+   "note": "/lens-widget-toggle"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Show Technical Debt Index (TDI) and project health trend. Usage: /lens-tdi\"",
+   "zh": "description: \"显示技术债指数（TDI）与项目健康度趋势。用法：/lens-tdi\"",
+   "note": "/lens-tdi"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Render the review graph as a self-contained interactive HTML project map (pan/zoom/hover/click) and write it to disk. Usage: /lens-map\"",
+   "zh": "description: \"把审查图谱渲染成自包含的交互式 HTML 项目地图（可平移/缩放/悬停/点击）并写入磁盘。用法：/lens-map\"",
+   "note": "/lens-map"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Show pi-lens runtime health: pipeline crashes, slow runners, and last dispatch latency. Usage: /lens-health\"",
+   "zh": "description: \"显示 pi-lens 运行时健康状况：流水线崩溃、慢速 runner、最近一次分发的延迟。用法：/lens-health\"",
+   "note": "/lens-health"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Show the slowest latency-log phases by p50 and p99 for the current process session and machine-wide active log window. Usage: /lens-perf\"",
+   "zh": "description: \"按 p50/p99 列出当前进程会话与整机日志窗口中最慢的延迟阶段。用法：/lens-perf\"",
+   "note": "/lens-perf"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Show pi-lens tool installation status: globally installed, auto-installed, or npx fallback. Usage: /lens-tools\"",
+   "zh": "description: \"显示 pi-lens 工具安装状态：全局安装、自动安装，还是 npx 回退。用法：/lens-tools\"",
+   "note": "/lens-tools"
+  },
+  {
+   "file": "pi-lens:dist/index.js",
+   "anchor": "description: \"Allow one edit to a file without a prior read. Usage: /lens-allow-edit <path>\"",
+   "zh": "description: \"允许对某个文件在未先读取的情况下执行一次编辑。用法：/lens-allow-edit <path>\"",
+   "note": "/lens-allow-edit"
+  },
+  {
+   "file": "mem0:dist/index.js",
+   "anchor": "description: 'Mem0 memory commands. Subcommands: status, search <query>, profile, add <text>, dedup [--apply], delete <id>.'",
+   "zh": "description: 'Mem0 记忆命令。子命令：status、search <query>、profile、add <text>、dedup [--apply]、delete <id>。'",
+   "note": "/mem0"
+  },
+  {
+   "file": "pi-simplify:dist/index.js",
+   "anchor": "description: \"Review recently changed code for clarity, consistency, and maintainability improvements\"",
+   "zh": "description: \"审查近期改动的代码，给出可读性、一致性与可维护性方面的改进建议\"",
+   "note": "/COMMAND_NAME"
+  },
+  {
+   "file": "rpiv-todo:todo.ts",
+   "anchor": "description: \"Show all todos on the current branch, grouped by status\"",
+   "zh": "description: \"列出当前分支上的所有 todo，按状态分组\"",
+   "note": "/COMMAND_NAME"
+  }
+ ]
+}

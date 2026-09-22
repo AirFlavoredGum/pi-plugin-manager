@@ -1,0 +1,17 @@
+{
+  "name": "pi-zh-localize",
+  "version": "1.0.0",
+  "private": true,
+  "description": "pi 界面汉化工具包：词典驱动、精确锚点替换、可备份可回滚。可选组件，不装也能只用 pi-plugin-manager。",
+  "keywords": ["pi", "localization", "i18n", "chinese", "zh-cn"],
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "check": "node patch.mjs --check",
+    "apply": "node patch.mjs --apply --verify",
+    "revert": "node patch.mjs --revert",
+    "build-dict": "node plugin/build-dict.mjs",
+    "build-autocomplete": "node plugin/build-autocomplete-dict.mjs",
+    "verify": "node plugin/verify-all.mjs"
+  }
+}
