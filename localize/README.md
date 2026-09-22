@@ -1,4 +1,4 @@
-# pi-zh-localize v1.0.0 — pi 界面汉化工具包
+# pi-zh-localize v1.1.0 — pi 界面汉化工具包
 
 把 pi 的**界面文案**汉化，同时**不动**模型名、提供商名、命令名、设置键名。
 
@@ -6,6 +6,7 @@
 - 目录：本仓库的 `localize\`（安装后默认在 `<pi 根>\localize\`，可用环境变量 `PI_LOCALIZE_DIR` 覆盖）
 - 目标：`@earendil-works/pi-coding-agent` 包，**自动定位**（`--pkg <目录>` 或 `PI_PKG_DIR` 可指定）
 - 版本：`node patch.mjs --version`。当前词典 196 条，对 pi 0.87.0 校验 **未匹配 0**
+- 可选：**pi 更新后自动重跑汉化**（默认关闭，见第十节）
 - 原理：pi 官方**没有**多语言/i18n 支持，界面文案硬编码在打包后的 `dist/bundle/chunks/*.js` 里。
   本工具用「词典 + 精确锚点替换」的方式改这些文案，并做了防误伤校验。
 
@@ -19,6 +20,7 @@
 | 只看匹配情况，不改文件 | `node patch.mjs --check` | — |
 | 还原英文原版 | `node patch.mjs --revert` | `还原.cmd` |
 | 看工具版本号 | `node patch.mjs --version` | — |
+| pi 更新后自动重跑（默认关） | `node plugin/auto-apply.mjs --status` 查看 / `--enable` 开启 | — |
 
 > 换机器 / 换安装位置：工具会自己找 pi（`PI_PKG_DIR` → 由 `PI_CODING_AGENT_DIR` 推算 → `PATH` 上的 `pi` →
 > 本机默认路径），也可以显式 `--pkg D:\path\to\node_modules\@earendil-works\pi-coding-agent`。
@@ -79,6 +81,9 @@ localize\
 ├─ zh-plugins.json      ← 插件词典（命令/提示模板说明；由 plugin/build-dict.mjs 生成）
 ├─ 汉化插件.cmd / 还原插件.cmd ← 双击即用（插件）
 ├─ plugin/              ← 插件汉化用的小工具（含 paths.mjs 统一路径解析，见第九节）
+│   └─ auto-apply.mjs   ← 「pi 更新后自动重跑」（默认关闭，见第十节）
+├─ auto-apply.json      ← 那个开关的状态 + 探测缓存（运行态，不进仓库）
+├─ auto-apply.log       ← 它每次做了什么（运行态，不进仓库）
 ├─ zh-autocomplete/     ← 「只改补全显示」的小扩展源文件（装到 <agent>\extensions\zh-autocomplete\）
 ├─ extract.mjs          ← 从打包产物里提取“可能是界面文案”的字符串（找新词条用）
 ├─ extract-settings.mjs ← 专门提取 /settings 面板条目
@@ -205,6 +210,7 @@ node plugin/verify-all.mjs                 # 一键全量验证（推荐最后�
 |---|---|
 | `zh-plugins.json` | 插件词典（生成物，别手改；改 `plugin/build-dict.mjs` 的 TABLE） |
 | `plugin/paths.mjs` | 统一解析 agent / npm / pi 包 / 扩展目录（环境变量可覆盖），脚本不再写死盘符 |
+| `plugin/auto-apply.mjs` | pi 更新后自动重跑汉化（默认关闭；自己判断“汉化掉了没”，失败自动还原） |
 | `plugin/build-dict.mjs` | 从插件源码**精确抽取**英文原文当锚点，再配中文 |
 | `plugin/verify-syntax.mjs` | 用 pi 自带 esbuild 转译 + `node --check` 验证改过的插件文件还能解析 |
 | `plugin/build-autocomplete-dict.mjs` | 生成 `<agent>\extensions\zh-autocomplete\dict.json` |
@@ -219,3 +225,23 @@ node plugin/verify-all.mjs                 # 一键全量验证（推荐最后�
 - `plugin/build-dict.mjs` 默认从 `backup/plugins/` 里抽**英文原文**（否则重跑会抽到已汉化的中文）；
   插件升级后想按新版本重新生成，加 `--live`。
 - `/plugin-manager` 面板里的「汉化」开关会自动同时管**主词典**和 `zh-plugins.json`。
+
+---
+
+## 十、pi 更新后自动重跑（可选，默认关闭）
+
+`pi update` 会覆盖 `dist`，汉化必然掉。开关打开后，由 `/plugin-manager` 在每次 pi 启动时
+调一次 `plugin/auto-apply.mjs`：汉化还在就什么都不做（读一个文件，约 10ms）；
+掉了才 `--apply --verify` 补回来，并把结果通知你；**自检没过就自动还原英文原版**。
+
+```bash
+node plugin/auto-apply.mjs --status     # 开关 / 上次尝试 / 探测缓存
+node plugin/auto-apply.mjs --dry-run    # 只报告会做什么（不写任何文件）
+node plugin/auto-apply.mjs --enable     # 开启（等价于面板里按 space）
+node plugin/auto-apply.mjs --disable    # 关闭
+node plugin/auto-apply.mjs --forget     # 清掉探测缓存（下次强制完整体检）
+```
+
+另外：手动关汉化（`patch.mjs --revert` / `还原.cmd` / 面板里切掉）会**同时关掉**这个自动开关，
+避免它下次启动又把英文版打回来（auto-apply 自己的“自检失败自动还原”会带 `--keep-intent`，保留开关）。
+完整的安全设计（七条）见仓库根目录 README 的「5.1」一节。

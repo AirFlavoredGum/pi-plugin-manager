@@ -1,9 +1,12 @@
 /**
- * Plugin Manager — /plugin-manager (v1.0.0)
+ * Plugin Manager — /plugin-manager (v1.1.0)
  *
- * 面板里只有两样东西：
+ * 面板里有三样东西：
  *   1. 你下载/安装的插件（settings.json 里的 packages）自带的 extensions / skills / prompts / themes
  *   2. pi 界面汉化开关（可选组件 localize/patch.mjs）—— 同时管主词典（pi 界面）与 zh-plugins.json（插件补全说明）
+ *   3. 「pi 更新后自动重跑汉化」开关（默认关闭）—— 开启后，每次 pi 启动检查一次汉化是否还在，
+ *      掉了就用 patch.mjs --apply --verify 补回来；自检没过则自动还原成英文并通知你。
+ *      细节：localize/plugin/auto-apply.mjs（状态文件 auto-apply.json，日志 auto-apply.log）
  *
  * 每个插件名后面会自动跟一个小括号简介：
  *   - 默认读该插件自己的 package.json 的 description，所以**新装的插件自动就有**，不用维护
@@ -25,7 +28,7 @@
  *   "path" 包含   "!glob" 排除   "+path" 强制包含   "-path" 强制排除
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -35,6 +38,7 @@ import {
 	type ExtensionAPI,
 	type ExtensionCommandContext,
 	type ExecResult,
+	type ExtensionContext,
 	type PathMetadata,
 	type ResolvedPaths,
 	type Theme,
@@ -60,7 +64,7 @@ const TYPE_LABELS: Record<ResourceType, string> = {
 const SCOPE: "packages" | "all" = "packages";
 
 /** 面板版本号（与 package.json 的 version 保持一致） */
-const VERSION = "1.0.0";
+const VERSION = "1.1.0";
 
 /**
  * 本扩展所在目录。仓库里是 <root>/extensions/index.ts，本地安装是 <agent>/extensions/plugin-manager/index.ts，
@@ -124,6 +128,16 @@ interface LocalizeInfo {
 	version?: string;
 }
 
+/** localize/auto-apply.json：由 auto-apply.mjs 与面板共同维护 */
+interface AutoApplyState {
+	enabled?: boolean;
+	appliedPiVersion?: string | null;
+	mainChunk?: string | null;
+	sampleZh?: string | null;
+	failedPiVersion?: string | null;
+	lastAttempt?: { at?: string; result?: string; detail?: string } | null;
+}
+
 type Row =
 	| {
 			kind: "header";
@@ -134,7 +148,8 @@ type Row =
 			plugin?: { version?: string; description?: string; note?: string };
 	  }
 	| { kind: "item"; item: Item }
-	| { kind: "localize" };
+	| { kind: "localize" }
+	| { kind: "autoApply" };
 
 // ---------------------------------------------------------------------------
 // 小工具
@@ -285,6 +300,69 @@ function readLocalizeVersion(script: string | undefined): string | undefined {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// 自动重跑汉化（auto-apply.json 的读写；真正的逻辑在 localize/plugin/auto-apply.mjs）
+// ---------------------------------------------------------------------------
+
+const autoApplyFile = (script: string) => join(dirname(script), "auto-apply.json");
+
+function readAutoApplyState(script: string): AutoApplyState {
+	try {
+		return JSON.parse(readFileSync(autoApplyFile(script), "utf8")) as AutoApplyState;
+	} catch {
+		return {};
+	}
+}
+
+/** 只改 enabled，其余字段（快速探测缓存、上次尝试）原样保留 */
+function writeAutoApplyEnabled(script: string, enabled: boolean): void {
+	let raw: Record<string, unknown> = {};
+	try {
+		raw = JSON.parse(readFileSync(autoApplyFile(script), "utf8")) as Record<string, unknown>;
+	} catch {
+		// 还没有状态文件：新建一份
+	}
+	raw.enabled = enabled;
+	raw.lastAttempt = {
+		at: new Date().toISOString(),
+		result: enabled ? "enabled-by-panel" : "disabled-by-panel",
+		detail: enabled ? "面板里开启" : "面板里关闭",
+	};
+	writeFileSync(autoApplyFile(script), `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+}
+
+/**
+ * 面板里手动关掉汉化 = 「我要英文」：顺手关掉自动重跑，
+ * 否则下次启动 auto-apply 又把它打回来（见 patch.mjs --revert 的同一处理）。
+ */
+function disableAutoApply(script: string): void {
+	try {
+		const file = autoApplyFile(script);
+		if (!existsSync(file)) return;
+		const raw = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
+		if (raw.enabled !== true) return;
+		raw.enabled = false;
+		raw.lastAttempt = { at: new Date().toISOString(), result: "disabled-by-revert", detail: "面板里关掉了汉化界面" };
+		writeFileSync(file, `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+	} catch {
+		// 状态文件读写失败不能影响汉化本身
+	}
+}
+
+/** 手动汉化成功后清掉快速探测缓存，让下次启动重新体检一次并补记（不跑外部命令） */
+function clearAutoApplyCache(script: string): void {
+	try {
+		const file = autoApplyFile(script);
+		if (!existsSync(file)) return;
+		const raw = JSON.parse(readFileSync(file, "utf8")) as Record<string, unknown>;
+		raw.mainChunk = null;
+		raw.sampleZh = null;
+		writeFileSync(file, `${JSON.stringify(raw, null, 2)}\n`, "utf8");
+	} catch {
+		// 缓存清不掉只是多跑一次体检，不影响功能
+	}
+}
+
 /**
  * 与主词典一起管理的附加词典（存在才加）：
  *   - 主词典（不传 --dict）   = pi 自己的界面文案
@@ -360,6 +438,8 @@ interface Deps {
 	installedPath: (source: string) => string | undefined;
 	localizeScript: string | undefined;
 	localize: LocalizeInfo;
+	/** pi 更新后自动重跑汉化（auto-apply.json） */
+	autoApply: AutoApplyState;
 	/** 当前解析出来的资源快照（r 刷新时会被替换） */
 	resolved?: ResolvedPaths;
 	/** 插件简介覆盖表（来自 descriptions.json） */
@@ -435,9 +515,10 @@ class PluginManagerPanel implements Component {
 		const query = this.query.trim().toLowerCase();
 		const rows: Row[] = [];
 
-		if (this.matches("界面 汉化 本地化 localization localize 中文", query)) {
+		if (this.matches("界面 汉化 本地化 localization localize 中文 自动 auto auto-apply 重跑 更新 升级", query)) {
 			rows.push({ kind: "header", label: "界面" });
 			rows.push({ kind: "localize" });
+			if (this.deps.localizeScript) rows.push({ kind: "autoApply" });
 		}
 
 		for (const group of this.groups) {
@@ -574,6 +655,14 @@ class PluginManagerPanel implements Component {
 			}
 			const next = await readLocalizeInfo(script, this.deps.exec);
 			this.deps.localize = next;
+			// 手动关掉汉化 = 「我要英文」：顺手关掉自动重跑，否则下次启动又被打回来
+			if (!enable) {
+				disableAutoApply(script);
+				this.deps.autoApply = { ...(this.deps.autoApply ?? {}), enabled: false };
+			} else if (code === 0 && next.state === "on") {
+				// 手动汉化成功：清掉快速探测缓存，下次启动重新体检并补记
+				clearAutoApplyCache(script);
+			}
 			if (code !== 0) {
 				this.setStatus(`汉化脚本退出码 ${code}：${output.slice(0, 80)}`, "error");
 			} else if (next.state === (enable ? "on" : "off")) {
@@ -599,12 +688,38 @@ class PluginManagerPanel implements Component {
 			void this.toggleLocalize();
 			return;
 		}
+		if (row.kind === "autoApply") {
+			this.toggleAutoApply();
+			return;
+		}
 		const item = row.item;
 		const enabled = !item.enabled;
 		if (item.metadata.origin === "package") this.togglePackageResource(item, enabled);
 		else this.toggleTopLevelResource(item, enabled);
 		this.changed++;
 		this.setStatus(`${item.displayName}：${enabled ? "已启用" : "已关闭"}`, enabled ? "on" : "off");
+	}
+
+	/** 切换「pi 更新后自动重跑汉化」。不动 changed：这与 settings.json 无关，关闭面板不需要 reload */
+	private toggleAutoApply(): void {
+		const script = this.deps.localizeScript;
+		if (!script) {
+			this.setStatus("未找到 localize/patch.mjs，无法设置自动重跑", "error");
+			return;
+		}
+		const enabled = this.deps.autoApply?.enabled !== true;
+		try {
+			writeAutoApplyEnabled(script, enabled);
+			this.deps.autoApply = { ...(this.deps.autoApply ?? {}), enabled };
+			this.setStatus(
+				enabled
+					? "已开启：pi 更新后会自动重跑汉化（下次启动生效；掉线会自动还原并通知你）"
+					: "已关闭：pi 更新后不再自动重跑汉化",
+				enabled ? "on" : "off",
+			);
+		} catch (error) {
+			this.setStatus(`写入 auto-apply.json 失败：${error instanceof Error ? error.message : String(error)}`, "error");
+		}
 	}
 
 	/** r：重新读 settings.json、重新解析资源、重新读简介、重新检测汉化状态 */
@@ -621,6 +736,7 @@ class PluginManagerPanel implements Component {
 			this.deps.resolved = await this.deps.resolvePackages();
 			this.deps.overrides = readDescriptionOverrides();
 			this.deps.localize = await readLocalizeInfo(this.deps.localizeScript, this.deps.exec);
+			if (this.deps.localizeScript) this.deps.autoApply = readAutoApplyState(this.deps.localizeScript);
 			this.loadGroups();
 			if (previousKey) {
 				const index = this.filtered.findIndex((row) =>
@@ -685,6 +801,28 @@ class PluginManagerPanel implements Component {
 		if (isSelected) name = t.bold(name);
 		const detail = t.fg("dim", ` ${info.detail}`);
 		return padBetween(`${prefix}${name}${detail}`, `${t.fg(tagColor, tag)}  `, width);
+	}
+
+	private autoApplyLine(isSelected: boolean, width: number): string {
+		const t = this.theme;
+		const state = this.deps.autoApply ?? {};
+		const enabled = state.enabled === true;
+		const cursor = isSelected ? t.fg("accent", "> ") : "  ";
+		const box = enabled ? t.fg("success", t.bold("[x]")) : t.fg("dim", "[ ]");
+		const prefix = `${cursor}    ${box} `;
+		const tag = enabled ? "开启" : "关闭";
+		const detailText = enabled
+			? ` 上次汉化 pi ${state.appliedPiVersion ?? "未记录"}`
+			: " 默认关闭";
+		const room = Math.max(8, width - visibleWidth(prefix) - visibleWidth(tag) - visibleWidth(detailText) - 4);
+		let name = truncateToWidth("pi 更新后自动重跑汉化", room, "...");
+		name = t.fg(enabled ? "text" : "dim", name);
+		if (isSelected) name = t.bold(name);
+		return padBetween(
+			`${prefix}${name}${t.fg("dim", detailText)}`,
+			`${t.fg(enabled ? "success" : "dim", tag)}  `,
+			width,
+		);
 	}
 
 	private headerLines(
@@ -772,7 +910,9 @@ class PluginManagerPanel implements Component {
 					? this.headerLines(row, width)
 					: row.kind === "localize"
 						? [this.localizeLine(i === this.selected, width)]
-						: [this.itemLine(row.item, i === this.selected, width)];
+						: row.kind === "autoApply"
+							? [this.autoApplyLine(i === this.selected, width)]
+							: [this.itemLine(row.item, i === this.selected, width)];
 			for (const line of rendered) {
 				allLines.push(line);
 				lineRowIndex.push(i);
@@ -856,10 +996,93 @@ class PluginManagerPanel implements Component {
 }
 
 // ---------------------------------------------------------------------------
+// 自动重跑（把逻辑交给 auto-apply.mjs，面板只负责触发 + 把结果告诉你）
+// ---------------------------------------------------------------------------
+
+/**
+ * 跑一次 auto-apply.mjs，按它的 action / 退出码决定要不要打扰你：
+ *   applied          成功了 → info（有失配就 warning）
+ *   failed-reverted  自检没过、已自动还原英文 → error
+ *   skip / noop      没动手 → 静默
+ */
+async function runAutoApply(runner: string, ctx: ExtensionContext, pi: ExtensionAPI): Promise<void> {
+	try {
+		const result = await pi.exec(NODE_BIN, [runner, "--json"], { timeout: 900000 });
+		const lastLine =
+			(result.stdout ?? "")
+				.trim()
+				.split("\n")
+				.filter(Boolean)
+				.pop() ?? "";
+		let payload: {
+			action?: string;
+			reason?: string;
+			stats?: { applied?: number; already?: number; unmatched?: number; errors?: number };
+		} = {};
+		try {
+			payload = JSON.parse(lastLine) as typeof payload;
+		} catch {
+			// 拿不到结构化结果就只看退出码
+		}
+		const code = result.code ?? 0;
+		const s = payload.stats;
+		const line = s
+			? `主词典：已汉化 ${s.applied ?? 0} · 已是中文 ${s.already ?? 0} · 失配 ${s.unmatched ?? 0} · 错误 ${s.errors ?? 0}`
+			: (payload.reason ?? "");
+
+		if (payload.action === "applied") {
+			const warn = code === 3;
+			ctx.ui.notify(
+				[
+					"pi 升级后已自动重跑汉化（重启 pi 后生效）",
+					`  ${line}`,
+					...(warn ? ["  有词条失配或被拦下：node patch.mjs --check 看是哪几条（失配的保持英文）"] : []),
+				].join("\n"),
+				warn ? "warning" : "info",
+			);
+			return;
+		}
+		if (payload.action === "failed-reverted") {
+			ctx.ui.notify(
+				[
+					"pi 升级后重跑汉化失败，已自动还原为英文原版（pi 仍能正常启动）",
+					`  ${line}`,
+					"  想看原因：node patch.mjs --check",
+				].join("\n"),
+				"error",
+			);
+			return;
+		}
+		if (payload.action === "skip" || payload.action === "noop") return; // 没事就不打扰
+		if (code !== 0 && code !== 4) {
+			const why = (result.stderr || result.stdout || "").trim().split("\n").slice(-2).join(" ").slice(0, 200);
+			ctx.ui.notify(`自动重跑汉化出错（exit ${code}）：${why}`, "warning");
+		}
+	} catch (error) {
+		ctx.ui.notify(`自动重跑汉化失败：${error instanceof Error ? error.message : String(error)}`, "warning");
+	}
+}
+
+// ---------------------------------------------------------------------------
 // 入口
 // ---------------------------------------------------------------------------
 
 export default function pluginManagerExtension(pi: ExtensionAPI) {
+	/**
+	 * pi 启动时按需重跑汉化 —— 只有在面板里显式开启过才会做（默认关闭）。
+	 * 不 await：汉化重跑要几秒，不能让 pi 启动干等；结果回来了再通知。
+	 */
+	pi.on("session_start", (event: { reason?: string }, ctx: ExtensionContext) => {
+		if (event?.reason !== "startup") return; // /new、/reload、fork 不重复跑
+		if (ctx.mode !== "tui" && ctx.mode !== "rpc") return; // 非交互模式（-p / json）不折腾
+		const script = findLocalizeScript();
+		if (!script) return;
+		if (readAutoApplyState(script).enabled !== true) return; // 一次小文件读就结束
+		const runner = join(dirname(script), "plugin", "auto-apply.mjs");
+		if (!existsSync(runner)) return;
+		void runAutoApply(runner, ctx, pi);
+	});
+
 	pi.registerCommand("plugin-manager", {
 		description: `开关已安装插件（extensions/skills/prompts/themes）与界面汉化 · v${VERSION}`,
 		handler: async (_args: string, ctx: ExtensionCommandContext) => {
@@ -884,10 +1107,12 @@ export default function pluginManagerExtension(pi: ExtensionAPI) {
 				installedPath: (source: string) => manager.getInstalledPath(source, "user"),
 				localizeScript: findLocalizeScript(),
 				localize: { state: "unknown", detail: "检测中…" },
+				autoApply: {},
 				overrides: readDescriptionOverrides(),
 				resolved: undefined,
 			};
 			deps.localize.script = deps.localizeScript;
+			if (deps.localizeScript) deps.autoApply = readAutoApplyState(deps.localizeScript);
 
 			ctx.ui.setStatus("plugin-manager", "正在扫描插件…");
 			try {

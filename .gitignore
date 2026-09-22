@@ -5,6 +5,11 @@
 localize/backup/
 localize/last-report.json
 
+# 「pi 更新后自动重跑汉化」的运行态（这台机器的开关与缓存，不是设计）
+localize/auto-apply.json
+localize/auto-apply.log
+localize/.auto-apply.lock
+
 # 由 extract*.mjs 生成的摸底产物（随时可重新生成）
 localize/extracted.json
 localize/keybindings.json

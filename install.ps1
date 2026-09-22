@@ -8,7 +8,8 @@
 
   两条安全约定（这个脚本永远不会做）：
     · 绝不覆盖你已有的 descriptions.json —— 那是你自己写的插件中文简介，除非显式加 -Force
-    · 绝不碰 localize\backup\ 和 localize\last-report.json —— 英文原文备份 + 上次体检报告
+    · 绝不碰 localize\backup\、localize\last-report.json、auto-apply.json / .log / .lock
+      —— 英文原文备份、上次体检报告，以及「pi 更新后自动重跑」的开关状态
 
   用法：
     # 只装面板（推荐先这样）
@@ -73,7 +74,7 @@ $plan += @{ Kind = 'file'; Always = $true; From = (Join-Path $PanelSrc 'index.ts
 $plan += @{ Kind = 'file'; Always = $false; From = (Join-Path $Repo 'descriptions.json'); To = (Join-Path $PanelDir 'descriptions.json'); What = '插件中文简介（已存在则保留）' }
 
 if ($WithLocalize) {
-    $keepOut = @('backup', 'last-report.json', 'extracted.json', 'keybindings.json', 'settings-items.json', 'candidates.txt')
+    $keepOut = @('backup', 'last-report.json', 'extracted.json', 'keybindings.json', 'settings-items.json', 'candidates.txt', 'auto-apply.json', 'auto-apply.log', '.auto-apply.lock')
     foreach ($item in Get-ChildItem -LiteralPath $LocalizeSrc -Force) {
         if ($keepOut -contains $item.Name) { continue }
         if ($item.PSIsContainer) { continue }   # 子目录单独处理，避免把 backup\ 之类带进去
@@ -136,8 +137,11 @@ Write-Host '  1) 重启 pi，或在 pi 里执行 /reload'
 Write-Host '  2) 在 pi 里输入 /plugin-manager 打开面板'
 Write-Host '  3) 想加中文简介：编辑' -NoNewline; Write-Host (Join-Path $PanelDir 'descriptions.json')
 if ($WithLocalize) {
-    Write-Host '  4) 汉化：node ' -NoNewline; Write-Host (Join-Path $LocalizeHome 'patch.mjs') -NoNewline; Write-Host ' --apply --verify'
-    Write-Host '     pi 升级后 dist 会被覆盖，重新跑一次 --apply 即可'
+    Write-Host '  4) 手动汉化：node ' -NoNewline; Write-Host (Join-Path $LocalizeHome 'patch.mjs') -NoNewline; Write-Host ' --apply --verify'
+    Write-Host '     pi 升级后 dist 会被覆盖，重新跑一次 --apply 即可（或开启下面这个自动开关）'
+    Write-Host '  5) 想让它“pi 更新后自动重跑汉化”（默认关闭）：在 /plugin-manager 里选中那一行按 space'
+    Write-Host '     或直接： node ' -NoNewline; Write-Host (Join-Path $LocalizeHome 'plugin\auto-apply.mjs') -NoNewline; Write-Host ' --enable'
+    Write-Host '     看状态： node ' -NoNewline; Write-Host (Join-Path $LocalizeHome 'plugin\auto-apply.mjs') -NoNewline; Write-Host ' --status（日志 auto-apply.log）'
 }
 Write-Host ''
 Write-Host '卸载：删掉' -NoNewline; Write-Host " $PanelDir" -NoNewline; Write-Host ' 即可；汉化若要还原：node patch.mjs --revert' -ForegroundColor DarkGray

@@ -304,6 +304,10 @@ if (report.errors.length) {
   for (const e of report.errors) log(`  x [${e.file}] ${e.anchor}: ${e.why}`);
 }
 
+// 告诉调用方（auto-apply.mjs / 面板）这次实际命中的是哪个打包文件：chunk 名带哈希，
+// 记下来以后就能用一个 10ms 的 includes() 判断“汉化还在不在”
+if (resolvedMain) report.resolved = { main: path.basename(resolvedMain), full: String(resolvedMain).replace(/\\/g, '/') };
+
 fs.writeFileSync(path.join(HERE, 'last-report.json'), JSON.stringify(report, null, 1), 'utf8');
 log(`\n报告已写入: last-report.json`);
 
@@ -316,6 +320,25 @@ if (verify && action !== 'revert') {
     log('  失败 ← ' + (err.message || err));
     log('  请立刻执行: node patch.mjs --revert');
     process.exitCode = 1;
+  }
+}
+
+// 还原 = 「我要英文」：顺手关掉「pi 更新后自动重跑汉化」，否则下次启动又会被自动打回来。
+// auto-apply.mjs 自己的“自检失败自动还原”会带 --keep-intent，因为它希望保留开关等下次 pi 升级再试。
+if (action === 'revert' && !flag('--keep-intent')) {
+  const autoState = path.join(HERE, 'auto-apply.json');
+  try {
+    if (fs.existsSync(autoState)) {
+      const st = JSON.parse(fs.readFileSync(autoState, 'utf8'));
+      if (st.enabled) {
+        st.enabled = false;
+        st.lastAttempt = { at: new Date().toISOString(), result: 'disabled-by-revert', detail: 'patch.mjs --revert' };
+        fs.writeFileSync(autoState, JSON.stringify(st, null, 2) + '\n', 'utf8');
+        log('已同时关闭「pi 更新后自动重跑汉化」（auto-apply.json → enabled: false）');
+      }
+    }
+  } catch {
+    // 状态文件坏了不能影响还原本身
   }
 }
 

@@ -7,8 +7,8 @@
 附一个**可选**组件 [`pi-zh-localize`](./localize/README.md)：把 pi 界面文案汉化（词典驱动、可备份、可回滚）。
 两个包**各自独立安装**，只想要面板就不用管汉化。
 
-- 面板版本：**v1.0.0**（`pi-plugin-manager`）
-- 汉化组件版本：**v1.0.0**（`pi-zh-localize`，可选）
+- 面板版本：**v1.1.0**（`pi-plugin-manager`）
+- 汉化组件版本：**v1.1.0**（`pi-zh-localize`，可选）
 - 平台：Windows / macOS / Linux（面板本身跨平台；`install.ps1` 与两个 `.cmd` 是 Windows 便利脚本）
 
 ---
@@ -17,8 +17,12 @@
 
 ```
 ──────────────────────────────────────────────────────────────
-  Plugin Manager v1.0.0                       启用 12 · 关闭 3
+  Plugin Manager v1.1.0                       启用 12 · 关闭 3
   搜索 按 / 过滤
+
+  界面
+     [x] 汉化界面 v1.1.0（重启 pi 生效） 已汉化 196 条        已汉化
+     [x] pi 更新后自动重跑汉化 上次汉化 pi 0.87.0              开启
 
   npm:pi-subagents v1.7.2 (子代理委派与多代理编排…)   启用 4/5
      Extensions                                         启用 1/1
@@ -35,6 +39,8 @@
   ↑↓ 移动 · space 切换（可连续多个）· / 搜索 · r 刷新 · esc 关闭并生效
 ──────────────────────────────────────────────────────────────
 ```
+
+> 「界面」那两行只有装了可选组件 `pi-zh-localize` 才会出现；没装就只是个纯插件开关面板。
 
 | 按键 | 作用 |
 |---|---|
@@ -142,13 +148,45 @@ node localize/patch.mjs --version         # 版本号
 
 几条要点：
 
-- 词典**按 pi 版本校验**：196 条对 pi 0.87.0 实测「未匹配 0」。pi 升级后重跑一次 `--apply` 即可。
+- 词典**按 pi 版本校验**：196 条对 pi 0.87.0 实测「未匹配 0」。pi 升级后重跑一次 `--apply` 即可（或者开启下面那个自动开关）。
 - 打包文件带哈希名（`chunk-XXXX.js`），pi 升级后会变；词典里的 `mainFileProbe` 会**自动重新定位**主 chunk，
   所以不会出现「一升级就全部失效」。
 - 插件词典（`zh-plugins.json`）的 `roots` 是相对路径，相对于 `<agent>\npm\node_modules`，
   环境变量 `PI_PLUGIN_NM_DIR` 可覆盖 —— 换机器不用改词典。
 - `zh-autocomplete` 扩展只包一层**补全显示**：`SKILL.md` 的 `description` 原文不动，
   所以发给模型的系统提示词仍是英文。
+
+### 5.1 pi 更新后自动重跑（默认**关闭**）
+
+每次 `pi update` 都会覆盖 `dist`，汉化必然掉。开上面面板里那一行「pi 更新后自动重跑汉化」之后，
+每次 pi 启动会检查一次：还在就什么都不做；掉了就自动 `--apply --verify` 补回来，并通知你结果。
+
+怎么做到「安全一点」（这七条就是全部设计）：
+
+| 设计 | 效果 |
+|---|---|
+| 默认关闭，面板里一行可见 | 不会偷偷改你的 pi；开没开一眼就能看到 |
+| 快速探测：缓存主 chunk 名 + 一条中文标记 | 汉化还在 → 读一个文件（约 10ms）就退出，不跑 patch、不碰任何文件 |
+| 只在真掉了才动手 | pi 修改了别的文件、或你已经手动汉化过，都不会重复折腾 |
+| 单实例锁（`.auto-apply.lock`，10 分钟自动过期） | 同时开两个 pi 也不会两个进程同时改同一个文件 |
+| 走的还是 `--apply --verify` | 先备份英文原文，改完立刻 `pi --version` 自检 |
+| **自检没过 → 自动还原英文原版** | 宁可退回英文，也不留下一个启动不了的 pi |
+| 同一 pi 版本失败过就不再重试 | 不会每次启动弹一次失败通知；下次 pi 升级会重新尝试 |
+
+另外两条「不跟你对着干」的规则：
+
+- 手动关汉化（面板里切掉、或双击 `还原.cmd`、或 `patch.mjs --revert`）会**顺手关掉**这个自动开关，
+  否则下次启动又会被打回来。
+- `--dry-run` 只报告会做什么，一个字节都不写；`auto-apply.log` 记录了它每一次做了什么。
+
+```bash
+node localize/plugin/auto-apply.mjs --status    # 看开关、上次尝试、缓存状态
+node localize/plugin/auto-apply.mjs --dry-run   # 只看会做什么
+node localize/plugin/auto-apply.mjs --enable    # 开启（等价于面板里按 space）
+node localize/plugin/auto-apply.mjs --disable   # 关闭
+```
+
+> 它需要一个 pi 扩展在启动时触发 —— 也就是本仓库的 `/plugin-manager`。只装汉化组件不装面板，则没有自动重跑。
 
 ## 六、自定义插件简介
 
@@ -170,13 +208,16 @@ node localize/patch.mjs --version         # 版本号
 ```
 pi-plugin-manager\
 ├─ package.json          ← pi 包清单（pi.extensions → ./extensions），keywords: pi-package
-├─ extensions\index.ts   ← 面板本体（/plugin-manager，v1.0.0）
+├─ extensions\index.ts   ← 面板本体（/plugin-manager，v1.1.0）+ 启动时触发自动重跑
 ├─ descriptions.json     ← 插件中文简介（你的数据，升级不会覆盖）
 ├─ localize\             ← 可选组件 pi-zh-localize（见其 README）
 ├─ install.ps1           ← Windows 部署脚本（-WithLocalize / -Force / -WhatIf）
 ├─ CHANGELOG.md
 └─ LICENSE
 ```
+
+运行时产物（不进仓库）：`localize\backup\`（英文原文备份）、`localize\last-report.json`（体检报告）、
+`localize\auto-apply.json` + `auto-apply.log`（自动重跑的开关与日志）。
 
 ## 八、环境变量
 
@@ -200,7 +241,6 @@ node localize/plugin/verify-all.mjs
 七项检查：本体词典未匹配为 0、被改过的插件文件语法、两个本地扩展可转译、JSON 合法、
 `descriptions.json` 覆盖率、补全映射单测、版本号一致性（面板 `VERSION` ↔ `package.json`）。
 不装汉化组件时，前两项会失败 —— 那属于正常，面板本身不受影响。
-
 ## 十、License
 
 MIT © 2026 AirFlavoredGum

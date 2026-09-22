@@ -1,7 +1,7 @@
 {
   "name": "pi-plugin-manager",
-  "version": "1.0.0",
-  "description": "pi 的插件开关面板：/plugin-manager 一屏启停已装插件的 extensions / skills / prompts / themes（可选附带界面汉化组件 pi-zh-localize）",
+  "version": "1.1.0",
+  "description": "pi 的插件开关面板：/plugin-manager 一屏启停已装插件的 extensions / skills / prompts / themes（可选附带界面汉化组件 pi-zh-localize，支持 pi 更新后自动重跑）",
   "keywords": [
     "pi-package",
     "pi",
