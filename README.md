@@ -69,10 +69,14 @@
 ### 方式 A：让 pi 自己装（推荐）
 
 ```bash
-pi install git:github.com/AirFlavoredGum/pi-plugin-manager@v1.0.0
+pi install git:github.com/AirFlavoredGum/pi-plugin-manager@v1.1.0
 ```
 
 装完重启 pi（或 `/reload`），输入 `/plugin-manager`。
+
+> **这一步要求机器上有 `git`**：pi 对 `git:` 源是真的去执行 `git clone`
+> （`pi-coding-agent` 的 `package-manager.js`），没装 git 时报的就是
+> `Error: spawn git ENOENT`。没有 git 就用下面的 A′。
 
 卸载：
 
@@ -80,10 +84,33 @@ pi install git:github.com/AirFlavoredGum/pi-plugin-manager@v1.0.0
 pi remove git:github.com/AirFlavoredGum/pi-plugin-manager
 ```
 
+### 方式 A′：没有 git —— zip + 本地源（仍然是 pi 托管）
+
+pi 的**本地路径源不需要 git**，而且同样归 `pi list` / `pi config` 管理。把仓库当 zip 下下来，
+解压到固定位置，再把这个目录交给 pi：
+
+```powershell
+# 1) 下 tag v1.1.0 的 zip，解压成 <包位置>\pi-plugin-manager-1.1.0\
+$dst = '<包位置>'
+New-Item -ItemType Directory -Force -Path $dst | Out-Null
+Invoke-WebRequest https://github.com/AirFlavoredGum/pi-plugin-manager/archive/refs/tags/v1.1.0.zip -OutFile "$dst\ppm.zip"
+Expand-Archive "$dst\ppm.zip" -DestinationPath $dst -Force
+Remove-Item "$dst\ppm.zip"
+
+# 2) 把这个目录交给 pi（本地源，不复制、不联网）
+pi install "$dst\pi-plugin-manager-1.1.0"
+```
+
+装完重启 pi（或 `/reload`），输入 `/plugin-manager`；卸载用同一个路径：
+`pi remove "$dst\pi-plugin-manager-1.1.0"`。
+
+- 以后升级：换新版本号的 zip 重复上面两步（本地源不会被 `pi update` 自动升级）
+- 想跟方式 A 一样一条命令升级，就得先装 git
+
 ### 方式 B：只把扩展文件放到本地（不用包管理器）
 
-> 方式 A 与方式 B **只能选一个**，两个都做会重复注册同一个 `/plugin-manager` 命令。
-> 想从 A 切成 B：先 `pi remove ...` 再跑 `install.ps1`。
+> 方式 A / A′ 与方式 B **只能选一个**，两个都做会重复注册同一个 `/plugin-manager` 命令。
+> 想从 A（或 A′）切成 B：先 `pi remove ...` 再跑 `install.ps1`。
 
 ```powershell
 # 把 extensions\index.ts + descriptions.json 复制到 <agent>\extensions\plugin-manager\

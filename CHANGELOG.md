@@ -9,6 +9,16 @@
 
 ---
 
+## Unreleased — 文档：修正安装 tag + 新增「没有 git」的装法
+
+- 修 README 里写死的旧 tag：`pi install git:...@v1.0.0` → **`@v1.1.0`**
+  （照旧文档装的人会停在 v1.0.0，拿不到 v1.1.0 的「pi 更新后自动重跑汉化」）
+- 新增**方式 A′**：没有 git 的机器用 GitHub 的 zip 下载 + `pi install <本地目录>`
+  —— pi 的本地路径源不需要 git，且仍由 `pi list` / `pi config` 管理
+- 在方式 A 处说明 `git:` 源需要 git，并给出 `Error: spawn git ENOENT` 的原因
+  （pi 对 `git:` 源是真的执行 `git clone`）
+- 只改文档：`extensions/index.ts`、`install.ps1`、`localize/**` 一行未动
+
 ## v1.1.0 — pi 更新后自动重跑汉化（默认关闭）
 
 新增：`/plugin-manager` 面板里多一行 **「pi 更新后自动重跑汉化」**（默认**关闭**）。
